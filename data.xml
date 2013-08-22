@@ -1,0 +1,30 @@
+<empty/>
+
+<single_att_str str='leet'/>
+<single_att_num num='1337'/>
+
+<multi_att str='leet' num='1337'/>
+<Mixed_Case Att_Str='leet' Att_Num='1337'/>
+
+<single_text_str>leet</single_text_str>
+<single_text_num>1337</single_text_num>
+
+<single_child><child/></single_child>
+<multi_child><child1/><child2/></multi_child>
+
+<multi_text>foo<child/>bar</multi_text>
+<multi_text>foo<child1/>bar<child2/>baz</multi_text>
+<multi_text>abc<child1/>123<child2/>def</multi_text>
+
+<complex>
+    <child1/>
+    <child2>xyzzy</child2>
+    <child3>42</child3>
+    <list>
+        <type1 x='1' y='2' enabled='false'/>
+        <type2 x='3' y='4' enabled='true'/>
+        <type3 x='5' y='6' enabled='unknown'/>
+    </list>
+    <child4 enabled='unknown'/>
+    <child5 amount='3.14'/>
+</complex>
