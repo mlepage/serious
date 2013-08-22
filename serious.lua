@@ -13,7 +13,7 @@ local find, format, gsub, rep, sub
 
 local function elem(name, atts)
     local elem = { [0]=name }
-    gsub(atts, '(%w+)=(["\'])(.-)%2', function(k, _, v)
+    gsub(atts, '([%w_]+)=(["\'])(.-)%2', function(k, _, v)
             elem[k] = tonumber(v) or v
         end)
     return elem
@@ -26,7 +26,7 @@ function parseXML(s)
     local ni, c, name, atts, empty
     local i, j = 1, 1
     while true do
-        ni, j, c, name, atts, empty = find(s, '<(%/?)([%w:]+)(.-)(%/?)>', i)
+        ni, j, c, name, atts, empty = find(s, '<(%/?)([%w:_]+)(.-)(%/?)>', i)
         if not ni then break end
         local text = sub(s, i, ni-1)
         if not find(text, '^%s*$') then
