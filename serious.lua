@@ -57,3 +57,45 @@ function parseXML(s)
     end
     return stack[1]
 end
+
+-- write out a Lua object model that was parsed from XML
+
+local function value(s)
+    return type(s) == 'string' and ("'" .. s .. "'") or s
+end
+
+function export(file, t, level)
+    if not level then
+        file:write('return ')
+        level = 0
+    end
+    local sep = ''
+    file:write(string.format("%s{", string.rep('    ', level)))
+    if t[0] then
+        file:write(string.format(' [0]=%s', value(t[0])))
+        sep = ','
+    end
+    for k, v in pairs(t) do
+        if type(k) == 'string' then
+            file:write(string.format('%s %s=%s', sep, k, value(v)))
+            sep = ','
+        end
+    end
+    if t[-1] then
+        file:write(string.format('%s [-1]=%s', sep, value(t[-1])))
+    end
+
+    if #t ~= 0 then
+        for i = 1, #t do
+            file:write(sep, '\n')
+            sep = ','
+            export(file, t[i], level+1)
+        end
+        file:write(string.format('\n%s}', string.rep('    ', level)))
+    else
+        file:write(' }')
+    end
+    if level == 0 then
+        file:write('\n')
+    end
+end
