@@ -1,4 +1,7 @@
 
+local find, format, gsub, rep, sub
+    = string.find, string.format, string.gsub, string.rep, string.sub
+
 -- Simple Lua code for parsing XML adapted from
 -- http://lua-users.org/wiki/LuaXml
 
@@ -10,7 +13,7 @@
 
 local function elem(name, atts)
     local elem = { [0]=name }
-    string.gsub(atts, '(%w+)=(["\'])(.-)%2', function(k, _, v)
+    gsub(atts, '(%w+)=(["\'])(.-)%2', function(k, _, v)
             elem[k] = tonumber(v) or v
         end)
     return elem
@@ -19,23 +22,24 @@ end
 function parseXML(s)
     local stack = {}
     local top = {}
-    table.insert(stack, top)
+    stack[#stack+1] = top
     local ni, c, name, atts, empty
     local i, j = 1, 1
     while true do
-        ni, j, c, name, atts, empty = string.find(s, '<(%/?)([%w:]+)(.-)(%/?)>', i)
+        ni, j, c, name, atts, empty = find(s, '<(%/?)([%w:]+)(.-)(%/?)>', i)
         if not ni then break end
-        local text = string.sub(s, i, ni-1)
-        if not string.find(text, '^%s*$') then
+        local text = sub(s, i, ni-1)
+        if not find(text, '^%s*$') then
             top[-1] = (top[-1] or '') .. text
         end
         if empty == '/' then  -- empty element tag
-            table.insert(top, elem(name, atts))
+            top[#top+1] = elem(name, atts)
         elseif c == '' then  -- start tag
             top = elem(name, atts)
-            table.insert(stack, top)  -- new level
+            stack[#stack+1] = top  -- new level
         else  -- end tag
-            local toclose = table.remove(stack)  -- remove top
+            local toclose = stack[#stack]
+            stack[#stack] = nil  -- remove top
             top = stack[#stack]
             if #stack < 1 then
                 error('nothing to close with ' .. name)
@@ -44,12 +48,12 @@ function parseXML(s)
                 error('trying to close ' .. toclose[0] .. ' with ' .. name)
             end
             toclose[-1] = tonumber(toclose[-1]) or toclose[-1]
-            table.insert(top, toclose)
+            top[#top+1] = toclose
         end
         i = j+1
     end
-    local text = string.sub(s, i)
-    if not string.find(text, '^%s*$') then
+    local text = sub(s, i)
+    if not find(text, '^%s*$') then
         stack[#stack] = (stack[#stack] or '') .. text
     end
     if #stack > 1 then
@@ -59,6 +63,8 @@ function parseXML(s)
 end
 
 -- write out a Lua object model that was parsed from XML
+
+local indent = '    '
 
 local function value(s)
     return type(s) == 'string' and ("'" .. s .. "'") or s
@@ -70,19 +76,19 @@ function export(file, t, level)
         level = 0
     end
     local sep = ''
-    file:write(string.format("%s{", string.rep('    ', level)))
+    file:write(format("%s{", rep(indent, level)))
     if t[0] then
-        file:write(string.format(' [0]=%s', value(t[0])))
+        file:write(format(' [0]=%s', value(t[0])))
         sep = ','
     end
     for k, v in pairs(t) do
         if type(k) == 'string' then
-            file:write(string.format('%s %s=%s', sep, k, value(v)))
+            file:write(format('%s %s=%s', sep, k, value(v)))
             sep = ','
         end
     end
     if t[-1] then
-        file:write(string.format('%s [-1]=%s', sep, value(t[-1])))
+        file:write(format('%s [-1]=%s', sep, value(t[-1])))
     end
 
     if #t ~= 0 then
@@ -91,7 +97,7 @@ function export(file, t, level)
             sep = ','
             export(file, t[i], level+1)
         end
-        file:write(string.format('\n%s}', string.rep('    ', level)))
+        file:write(format('\n%s}', rep(indent, level)))
     else
         file:write(' }')
     end
