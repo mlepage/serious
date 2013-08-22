@@ -2,12 +2,18 @@
 -- Simple Lua code for parsing XML adapted from
 -- http://lua-users.org/wiki/LuaXml
 
-local function parseArgs(s)
-    local arg = {}
-    string.gsub(s, '(%w+)=(["\'])(.-)%2', function (w, _, a)
-            arg[w] = a
+-- Heavily modified to store:
+-- elem[0] = name
+-- elem[-1] = text
+-- elem.att_name = att_value
+-- elem[N] = child elem N
+
+local function elem(name, atts)
+    local elem = { [0]=name }
+    string.gsub(atts, '(%w+)=(["\'])(.-)%2', function (k, _, v)
+            elem[k] = v
         end)
-    return arg
+    return elem
 end
 
 function parseXML(s)
@@ -21,12 +27,12 @@ function parseXML(s)
         if not ni then break end
         local text = string.sub(s, i, ni-1)
         if not string.find(text, '^%s*$') then
-            table.insert(top, text)
+            top[-1] = (top[-1] or '') .. text
         end
         if empty == '/' then  -- empty element tag
-            table.insert(top, { name=name, atts=parseArgs(atts), empty=1 })
+            table.insert(top, elem(name, atts))
         elseif c == '' then  -- start tag
-            top = { name=name, atts=parseArgs(atts) }
+            top = elem(name, atts)
             table.insert(stack, top)  -- new level
         else  -- end tag
             local toclose = table.remove(stack)  -- remove top
@@ -34,8 +40,8 @@ function parseXML(s)
             if #stack < 1 then
                 error('nothing to close with ' .. name)
             end
-            if toclose.name ~= name then
-                error('trying to close ' .. toclose.name .. ' with ' .. name)
+            if toclose[0] ~= name then
+                error('trying to close ' .. toclose[0] .. ' with ' .. name)
             end
             table.insert(top, toclose)
         end
@@ -43,10 +49,10 @@ function parseXML(s)
     end
     local text = string.sub(s, i)
     if not string.find(text, '^%s*$') then
-        table.insert(stack[#stack], text)
+        stack[#stack] = (stack[#stack] or '') .. text
     end
     if #stack > 1 then
-        error('unclosed ' .. stack[#stack].name)
+        error('unclosed ' .. stack[#stack][0])
     end
     return stack[1]
 end
