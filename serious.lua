@@ -10,8 +10,8 @@
 
 local function elem(name, atts)
     local elem = { [0]=name }
-    string.gsub(atts, '(%w+)=(["\'])(.-)%2', function (k, _, v)
-            elem[k] = v
+    string.gsub(atts, '(%w+)=(["\'])(.-)%2', function(k, _, v)
+            elem[k] = tonumber(v) or v
         end)
     return elem
 end
@@ -43,6 +43,7 @@ function parseXML(s)
             if toclose[0] ~= name then
                 error('trying to close ' .. toclose[0] .. ' with ' .. name)
             end
+            toclose[-1] = tonumber(toclose[-1]) or toclose[-1]
             table.insert(top, toclose)
         end
         i = j+1
